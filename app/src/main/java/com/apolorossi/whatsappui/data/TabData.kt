@@ -17,3 +17,6 @@ enum class Tabs (val value:String) {
     STATUS("Status"),
     CALLS("Calls")
 }
+
+
+const val INITIAL_PAGE = 0

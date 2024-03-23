@@ -1,5 +1,6 @@
 package com.apolorossi.whatsappui.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
@@ -15,10 +18,12 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,13 +33,27 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apolorossi.whatsappui.data.TabData
 import com.apolorossi.whatsappui.data.tabs
+import kotlinx.coroutines.flow.collectLatest
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TabsComponent() {
+fun TabsComponent(
+    initialIndex: Int = 0,
+    pagerState: PagerState,
+    onTabSelected: (Int) -> Unit
+) {
 
     var selectedTabIndex by remember {
-        mutableStateOf(0)
+        mutableStateOf(initialIndex)
     }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .collectLatest { page ->
+                selectedTabIndex = page
+            }
+    }
+
     TabRow(
         selectedTabIndex = selectedTabIndex,
         modifier = Modifier.fillMaxWidth(),
@@ -55,6 +74,7 @@ fun TabsComponent() {
                 selected = selectedTabIndex == index,
                 onClick = {
                     selectedTabIndex = index
+                    onTabSelected(index)
                 },
                 text = {
                     TabContent(tabData)
@@ -96,7 +116,7 @@ fun TabWithUnreadCount(tabData: TabData) {
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.background),
 
-            ) {
+                ) {
                 Text(
                     text = it.toString(),
                     style = TextStyle(
@@ -111,8 +131,16 @@ fun TabWithUnreadCount(tabData: TabData) {
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun TabsComponentPreview() {
-    TabsComponent()
+
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { tabs.size })
+
+    TabsComponent(
+        0,
+        pagerState,
+        onTabSelected = {}
+    )
 }
